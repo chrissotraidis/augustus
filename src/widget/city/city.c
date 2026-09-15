@@ -470,8 +470,17 @@ static int handle_last_touch(map_tile *tile)
             window_building_info_show(tile->grid_offset);
         }
         return 1;
-    } else if (touch_not_click(last)) {
+    }
+
+    touch_gesture gesture = touch_get_two_finger_gesture();
+    if (gesture == TOUCH_GESTURE_ZOOM) {
+        scroll_drag_end();
         handle_touch_zoom(touch_get_earliest(), last);
+        return 1;
+    }
+    zoom_end_touch();
+    if (gesture == TOUCH_GESTURE_UNDECIDED) {
+        return 1;
     }
     return 0;
 }
@@ -761,11 +770,21 @@ void widget_city_handle_input_military(const mouse *m, const hotkeys *h, int leg
         if (t->has_started) {
             data.capture_input = 1;
         }
+        int should_scroll = 1;
         const touch *last = touch_get_latest();
         if (last->in_use) {
-            handle_touch_zoom(t, last);
+            touch_gesture gesture = touch_get_two_finger_gesture();
+            if (gesture == TOUCH_GESTURE_ZOOM) {
+                scroll_drag_end();
+                handle_touch_zoom(t, last);
+            } else {
+                zoom_end_touch();
+            }
+            should_scroll = gesture == TOUCH_GESTURE_PAN;
         }
-        handle_touch_scroll(t);
+        if (should_scroll) {
+            handle_touch_scroll(t);
+        }
         if (t->has_ended) {
             data.capture_input = 0;
         }

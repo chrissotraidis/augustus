@@ -17,6 +17,12 @@ typedef enum {
     TOUCH_MODE_MAX = 3
 } touch_mode;
 
+typedef enum {
+    TOUCH_GESTURE_UNDECIDED = 0,
+    TOUCH_GESTURE_PAN = 1,
+    TOUCH_GESTURE_ZOOM = 2
+} touch_gesture;
+
 typedef struct {
     int in_use;
     int has_started;
@@ -41,6 +47,7 @@ int touch_was_double_click(const touch *t);
 int touch_was_two_finger_tap(void);
 int touch_poll_long_press(void);
 void touch_consume_current_gesture(void);
+touch_gesture touch_get_two_finger_gesture(void);
 
 int touch_is_scroll(void);
 int touch_get_scroll(void);

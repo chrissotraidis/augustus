@@ -9,6 +9,8 @@
 #define LONG_PRESS_TIME 350
 #define NOT_MOVING_RANGE 5
 #define SCROLL_FINGER_RADIUS 25
+#define TWO_FINGER_PAN_ACTIVATION 16
+#define TWO_FINGER_ZOOM_ACTIVATION 24
 #define MILLIS_TOLERANCE_BETWEEN_LAST_MOVE_AND_TOUCH_END 60
 
 typedef enum {
@@ -22,6 +24,7 @@ static struct {
     touch old_touch;
     int last_scroll_position;
     touch_mode mode;
+    touch_gesture two_finger_gesture;
     emulated_mouse_click touchpad_mode_click_type;
 } data;
 
@@ -128,6 +131,38 @@ void touch_consume_current_gesture(void)
             data.finger[i].long_press_handled = 1;
         }
     }
+}
+
+touch_gesture touch_get_two_finger_gesture(void)
+{
+    if (data.two_finger_gesture != TOUCH_GESTURE_UNDECIDED) {
+        return data.two_finger_gesture;
+    }
+    if (get_total_active_touches() != 2) {
+        return TOUCH_GESTURE_UNDECIDED;
+    }
+
+    const touch *first = touch_get_earliest();
+    const touch *last = touch_get_latest();
+    if (!first->has_moved || !last->has_moved) {
+        return TOUCH_GESTURE_UNDECIDED;
+    }
+
+    int first_dx = first->current_point.x - first->start_point.x;
+    int first_dy = first->current_point.y - first->start_point.y;
+    int last_dx = last->current_point.x - last->start_point.x;
+    int last_dy = last->current_point.y - last->start_point.y;
+    int pan_delta = abs(first_dx + last_dx) + abs(first_dy + last_dy);
+    int zoom_delta = abs(last_dx - first_dx) + abs(last_dy - first_dy);
+
+    // Opposing motion is a pinch; shared motion is a two-finger pan. Bias
+    // ambiguous movement toward panning so small finger jitter cannot steal it.
+    if (zoom_delta >= TWO_FINGER_ZOOM_ACTIVATION && zoom_delta > pan_delta) {
+        data.two_finger_gesture = TOUCH_GESTURE_ZOOM;
+    } else if (pan_delta >= TWO_FINGER_PAN_ACTIVATION) {
+        data.two_finger_gesture = TOUCH_GESTURE_PAN;
+    }
+    return data.two_finger_gesture;
 }
 
 int touch_is_scroll(void)
@@ -260,6 +295,9 @@ void reset_touches(int reset_old_touch)
             t->previous_frame_point = t->current_point;
             t->has_started = start_delayed(t);
         }
+    }
+    if (get_total_active_touches() < 2) {
+        data.two_finger_gesture = TOUCH_GESTURE_UNDECIDED;
     }
 }
 
