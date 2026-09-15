@@ -43,6 +43,7 @@ static UIButton *pauseButton = nil;
 
 static CaesarPadPauseTarget *pauseTarget = nil;
 static UIAccessibilityElement *canvasAccessibility = nil;
+static BOOL lifecycleResumed = NO;
 
 void ios_install_pause_button(void) {
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -74,7 +75,7 @@ void ios_install_pause_button(void) {
         pauseButton.translatesAutoresizingMaskIntoConstraints = NO;
         pauseButton.accessibilityIdentifier = @"caesarpad.pause";
         pauseButton.accessibilityLabel = @"Pause or resume game";
-        pauseButton.accessibilityValue = @"Running";
+        pauseButton.accessibilityValue = lifecycleResumed ? @"Running, lifecycle autosave resumed" : @"Running";
         pauseButton.tintColor = UIColor.whiteColor;
         pauseButton.backgroundColor = [UIColor.blackColor colorWithAlphaComponent:0.65];
         pauseButton.layer.cornerRadius = 10;
@@ -96,6 +97,13 @@ void ios_install_pause_button(void) {
     });
 }
 
+void ios_mark_lifecycle_resumed(void) {
+    lifecycleResumed = YES;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        pauseButton.accessibilityValue = @"Running, lifecycle autosave resumed";
+    });
+}
+
 void c3_path_chosen(char *new_path) {
     unsigned long len = strlen(new_path);
     snprintf(path, GAME_PATH_MAX, "%s", new_path);
@@ -108,6 +116,14 @@ const char *ios_get_base_path(void) {
     [gameDataDirectory.path getFileSystemRepresentation:path maxLength:300];
     
     return path;
+}
+
+const char *ios_get_lifecycle_autosave_path(void) {
+    static char autosavePath[GAME_PATH_MAX];
+    NSURL *documentsDirectory = [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
+    NSURL *autosaveURL = [documentsDirectory URLByAppendingPathComponent:@"caesarpad-autosave.svx"];
+    [autosaveURL.path getFileSystemRepresentation:autosavePath maxLength:GAME_PATH_MAX];
+    return autosavePath;
 }
 
 const char *ios_show_c3_path_dialog(int again)

@@ -6,7 +6,9 @@
 const char *ios_show_c3_path_dialog(int again);
 void c3_path_chosen(char *new_path);
 const char *ios_get_base_path(void);
+const char *ios_get_lifecycle_autosave_path(void);
 void ios_install_pause_button(void);
+void ios_mark_lifecycle_resumed(void);
 
 #endif // defined(__IOS__)
 

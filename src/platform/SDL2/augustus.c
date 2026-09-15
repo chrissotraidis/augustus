@@ -7,6 +7,7 @@
 #include "core/log.h"
 #include "core/time.h"
 #include "game/game.h"
+#include "game/file.h"
 #include "game/settings.h"
 #include "game/system.h"
 #include "graphics/screen.h"
@@ -31,6 +32,7 @@
 #include "platform/switch/switch.h"
 #include "platform/vita/vita.h"
 #include "window/asset_previewer.h"
+#include "window/city.h"
 
 #include "tinyfiledialogs/tinyfiledialogs.h"
 
@@ -252,6 +254,13 @@ static int handle_event_immediate(void *param1, SDL_Event *event)
 {
     switch (event->type) {
         case SDL_APP_WILLENTERBACKGROUND:
+#ifdef __IOS__
+            if (window_get_id() >= WINDOW_CITY && window_get_id() <= WINDOW_SPEED_OPTIONS) {
+                const char *autosave = ios_get_lifecycle_autosave_path();
+                int saved = game_file_write_saved_game(autosave);
+                SDL_Log("CaesarPad lifecycle autosave %s: %s", saved ? "written" : "failed", autosave);
+            }
+#endif
             platform_renderer_pause();
             return 0;
         default:
@@ -692,6 +701,15 @@ static void setup(const augustus_args *args)
         SDL_Log("Exiting: game init failed");
         exit_with_status(2);
     }
+#ifdef __IOS__
+    const char *autosave = ios_get_lifecycle_autosave_path();
+    if (game_file_load_saved_game(autosave) == 1) {
+        file_remove(autosave);
+        window_city_show();
+        ios_mark_lifecycle_resumed();
+        SDL_Log("CaesarPad resumed lifecycle autosave: %s", autosave);
+    }
+#endif
 
     data.quit = 0;
     data.active = 1;
