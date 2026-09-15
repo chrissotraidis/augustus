@@ -292,7 +292,7 @@ elseif (${TARGET_PLATFORM} STREQUAL "ios")
     set(PLATFORM_FILES
         ${PLATFORM_FILES}
         ${PROJECT_SOURCE_DIR}/src/platform/ios/ios.m
-        ${PROJECT_SOURCE_DIR}/src/platform/ios/GameDataPickerController.m
+        ${PROJECT_SOURCE_DIR}/src/platform/ios/CaesarPadGameDataPickerController.m
     )
 endif()
 
