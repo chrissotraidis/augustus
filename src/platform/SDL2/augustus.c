@@ -656,6 +656,9 @@ static void setup(const augustus_args *args)
         SDL_Log("Exiting: SDL create window failed");
         exit_with_status(-2);
     }
+#ifdef __IOS__
+    ios_install_pause_button();
+#endif
 
 #ifdef PLATFORM_ENABLE_INIT_CALLBACK
     platform_init_callback();
