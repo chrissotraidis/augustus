@@ -523,6 +523,11 @@ static void handle_first_touch(map_tile *tile)
     const touch *first = touch_get_earliest();
     building_type type = building_construction_type();
 
+    if (touch_is_navigation_only(first)) {
+        handle_touch_scroll(first);
+        return;
+    }
+
     if (touch_poll_long_press()) {
         scroll_drag_end();
         data.capture_input = 0;

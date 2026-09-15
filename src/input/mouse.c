@@ -44,6 +44,11 @@ void mouse_set_from_touch(const touch *first, const touch *last)
     data.left.system_change = SYSTEM_NONE;
     data.right.system_change = SYSTEM_NONE;
 
+    if (touch_is_navigation_only(first)) {
+        mouse_reset_button_state();
+        return;
+    }
+
     if (touch_is_scroll()) {
         mouse_reset_button_state();
         return;

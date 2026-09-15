@@ -25,6 +25,7 @@ static struct {
     int last_scroll_position;
     touch_mode mode;
     touch_gesture two_finger_gesture;
+    int pencil_mode;
     emulated_mouse_click touchpad_mode_click_type;
 } data;
 
@@ -83,7 +84,7 @@ int touch_not_click(const touch *t)
 
 int touch_was_click(const touch *t)
 {
-    return (t->has_ended && !t->has_moved && !t->long_press_handled &&
+    return (!touch_is_navigation_only(t) && t->has_ended && !t->has_moved && !t->long_press_handled &&
         (t->last_change_time - t->start_time) < CLICK_TIME);
 }
 
@@ -98,7 +99,8 @@ int touch_was_two_finger_tap(void)
 {
     const touch *first = touch_get_earliest();
     const touch *last = touch_get_latest();
-    if (!last->in_use || last->start_time - first->start_time >= CLICK_TIME ||
+    if (!last->in_use || touch_is_navigation_only(first) || touch_is_navigation_only(last) ||
+        last->start_time - first->start_time >= CLICK_TIME ||
         first->has_moved || last->has_moved ||
         first->long_press_handled || last->long_press_handled) {
         return 0;
@@ -114,7 +116,7 @@ int touch_poll_long_press(void)
 {
     touch *t = (touch *) touch_get_earliest();
     time_millis end_time = t->has_ended ? t->last_change_time : time_get_millis();
-    if (!t->in_use || t->long_press_handled ||
+    if (!t->in_use || touch_is_navigation_only(t) || t->long_press_handled ||
         abs(t->current_point.x - t->start_point.x) > 24 ||
         abs(t->current_point.y - t->start_point.y) > 24 ||
         end_time - t->start_time < LONG_PRESS_TIME) {
@@ -122,6 +124,11 @@ int touch_poll_long_press(void)
     }
     t->long_press_handled = 1;
     return 1;
+}
+
+int touch_is_navigation_only(const touch *t)
+{
+    return data.pencil_mode && t->input_type == TOUCH_INPUT_FINGER;
 }
 
 void touch_consume_current_gesture(void)
@@ -214,7 +221,7 @@ static int get_unused_touch_index(void)
     return i;
 }
 
-int touch_create(touch_coords start_coords, time_millis start_time)
+int touch_create_with_input(touch_coords start_coords, time_millis start_time, touch_input_type input_type)
 {
     int index = get_unused_touch_index();
     if (index != MAX_ACTIVE_TOUCHES) {
@@ -231,8 +238,14 @@ int touch_create(touch_coords start_coords, time_millis start_time)
         t->last_movement = t->frame_movement;
         t->start_time = start_time;
         t->last_change_time = start_time;
+        t->input_type = input_type;
     }
     return index;
+}
+
+int touch_create(touch_coords start_coords, time_millis start_time)
+{
+    return touch_create_with_input(start_coords, start_time, TOUCH_INPUT_FINGER);
 }
 
 int touch_in_use(int index)
@@ -409,4 +422,15 @@ void touch_set_mode(touch_mode mode)
 void touch_cycle_mode(void)
 {
     data.mode = (data.mode + 1) % TOUCH_MODE_MAX;
+}
+
+void touch_set_pencil_mode(int enabled)
+{
+    reset_touches(1);
+    data.pencil_mode = enabled != 0;
+}
+
+int touch_pencil_mode(void)
+{
+    return data.pencil_mode;
 }

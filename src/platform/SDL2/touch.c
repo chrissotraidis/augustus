@@ -7,6 +7,8 @@
 
 #include "SDL.h"
 
+#include <string.h>
+
 static SDL_FingerID touch_id[MAX_ACTIVE_TOUCHES];
 
 #ifdef __APPLE__
@@ -29,6 +31,22 @@ static int get_touch_index(SDL_FingerID id)
         }
     }
     return MAX_ACTIVE_TOUCHES;
+}
+
+static touch_input_type get_touch_input_type(SDL_TouchID id)
+{
+#if defined(__IOS__)
+    for (int i = 0; i < SDL_GetNumTouchDevices(); ++i) {
+        if (SDL_GetTouchDevice(i) == id) {
+            const char *name = SDL_GetTouchName(i);
+            if (name && strcmp(name, "Apple Pencil") == 0) {
+                return TOUCH_INPUT_PENCIL;
+            }
+            break;
+        }
+    }
+#endif
+    return TOUCH_INPUT_FINGER;
 }
 
 void platform_touch_start(void *event)
@@ -57,7 +75,8 @@ void platform_touch_start(void *event)
 
 #undef FRONT_PANEL_TOUCH_ID
 #endif
-    int index = touch_create(get_touch_coordinates(e->x, e->y), e->timestamp);
+    int index = touch_create_with_input(get_touch_coordinates(e->x, e->y), e->timestamp,
+        get_touch_input_type(e->touchId));
     if (index != MAX_ACTIVE_TOUCHES) {
         touch_id[index] = e->fingerId;
     }

@@ -5,6 +5,7 @@
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 #include "game/state.h"
+#include "input/touch.h"
 
 #define GAME_PATH_MAX 300
 static int has_directory;
@@ -15,10 +16,20 @@ static UIWindow *alertwindow = nil;
 @interface CaesarPadPauseTarget : NSObject
 - (void)togglePause;
 - (void)showControls;
+- (void)togglePencilMode;
 @end
 
 static UIButton *pauseButton = nil;
 static UIButton *helpButton = nil;
+static UIButton *pencilButton = nil;
+static BOOL pencilMode = NO;
+
+static void updatePencilButton(void) {
+    pencilButton.accessibilityValue = pencilMode ? @"On" : @"Off, traditional touch controls";
+    pencilButton.backgroundColor = pencilMode ?
+        [UIColor.systemBlueColor colorWithAlphaComponent:0.85] :
+        [UIColor.blackColor colorWithAlphaComponent:0.65];
+}
 
 @implementation CaesarPadPauseTarget
 
@@ -35,9 +46,12 @@ static UIButton *helpButton = nil;
         return;
     }
 
+    NSString *message = pencilMode ?
+        @"PENCIL MODE\nPencil: select, inspect, and place\nDrag one finger: pan only\nPinch: zoom\n\nFinger taps cannot change the city while Pencil mode is on. Tap the Pencil button to return to traditional touch controls.\n\nCaesar III is a city builder, not an RTS. Walkers move automatically and cannot be group-selected; military legions are ordered individually." :
+        @"TRADITIONAL TOUCH\nTap: select buildings and controls\nDrag one finger: pan the map\nDrag two fingers together: pan the map\nPinch: zoom\nLong press or two-finger tap: inspect or cancel\n\nTap the Pencil button for precise Pencil interaction with finger-only navigation.\n\nCaesar III is a city builder, not an RTS. Walkers move automatically and cannot be group-selected; military legions are ordered individually.";
     UIAlertController *alert = [UIAlertController
         alertControllerWithTitle:@"CaesarPad Controls"
-        message:@"Tap: select buildings and controls\nDrag one finger: pan the map\nDrag two fingers together: pan the map\nPinch: zoom\nLong press or two-finger tap: inspect or cancel\n\nCaesar III is a city builder, not an RTS. Walkers move automatically and cannot be group-selected; military legions are ordered individually."
+        message:message
         preferredStyle:UIAlertControllerStyleAlert];
     UIWindow *gameWindow = helpButton.window;
     [alert addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
@@ -51,6 +65,13 @@ static UIButton *helpButton = nil;
     alertwindow.windowLevel = UIWindowLevelAlert;
     [alertwindow makeKeyAndVisible];
     [alertwindow.rootViewController presentViewController:alert animated:YES completion:nil];
+}
+
+- (void)togglePencilMode {
+    pencilMode = !pencilMode;
+    [[NSUserDefaults standardUserDefaults] setBool:pencilMode forKey:@"CaesarPadPencilMode"];
+    touch_set_pencil_mode(pencilMode);
+    updatePencilButton();
 }
 
 @end
@@ -96,6 +117,8 @@ void ios_install_pause_button(void) {
         }
 
         pauseTarget = [CaesarPadPauseTarget new];
+        pencilMode = [[NSUserDefaults standardUserDefaults] boolForKey:@"CaesarPadPencilMode"];
+        touch_set_pencil_mode(pencilMode);
         pauseButton = [UIButton buttonWithType:UIButtonTypeSystem];
         pauseButton.translatesAutoresizingMaskIntoConstraints = NO;
         pauseButton.accessibilityIdentifier = @"caesarpad.pause";
@@ -117,13 +140,24 @@ void ios_install_pause_button(void) {
         [helpButton setImage:[UIImage systemImageNamed:@"questionmark"] forState:UIControlStateNormal];
         [helpButton addTarget:pauseTarget action:@selector(showControls) forControlEvents:UIControlEventTouchUpInside];
 
+        pencilButton = [UIButton buttonWithType:UIButtonTypeSystem];
+        pencilButton.translatesAutoresizingMaskIntoConstraints = NO;
+        pencilButton.accessibilityIdentifier = @"caesarpad.pencil-mode";
+        pencilButton.accessibilityLabel = @"Apple Pencil controls";
+        pencilButton.tintColor = UIColor.whiteColor;
+        pencilButton.layer.cornerRadius = 10;
+        [pencilButton setImage:[UIImage systemImageNamed:@"pencil"] forState:UIControlStateNormal];
+        [pencilButton addTarget:pauseTarget action:@selector(togglePencilMode) forControlEvents:UIControlEventTouchUpInside];
+        updatePencilButton();
+
         [gameWindow addSubview:pauseButton];
         [gameWindow addSubview:helpButton];
+        [gameWindow addSubview:pencilButton];
         canvasAccessibility = [[CaesarPadCanvasAccessibilityElement alloc] initWithAccessibilityContainer:gameWindow];
         canvasAccessibility.accessibilityIdentifier = @"caesarpad.canvas";
         canvasAccessibility.accessibilityLabel = @"Caesar III game canvas";
         canvasAccessibility.accessibilityTraits = UIAccessibilityTraitAllowsDirectInteraction;
-        gameWindow.accessibilityElements = @[pauseButton, helpButton, canvasAccessibility];
+        gameWindow.accessibilityElements = @[pauseButton, helpButton, pencilButton, canvasAccessibility];
         [NSLayoutConstraint activateConstraints:@[
             [pauseButton.leadingAnchor constraintEqualToAnchor:gameWindow.safeAreaLayoutGuide.leadingAnchor constant:12],
             [pauseButton.bottomAnchor constraintEqualToAnchor:gameWindow.safeAreaLayoutGuide.bottomAnchor constant:-12],
@@ -133,6 +167,10 @@ void ios_install_pause_button(void) {
             [helpButton.bottomAnchor constraintEqualToAnchor:pauseButton.bottomAnchor],
             [helpButton.widthAnchor constraintEqualToConstant:48],
             [helpButton.heightAnchor constraintEqualToConstant:48],
+            [pencilButton.leadingAnchor constraintEqualToAnchor:helpButton.trailingAnchor constant:8],
+            [pencilButton.bottomAnchor constraintEqualToAnchor:pauseButton.bottomAnchor],
+            [pencilButton.widthAnchor constraintEqualToConstant:48],
+            [pencilButton.heightAnchor constraintEqualToConstant:48],
         ]];
     });
 }
