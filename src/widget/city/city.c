@@ -450,18 +450,30 @@ static void handle_touch_zoom(const touch *first, const touch *last)
     }
 }
 
-static void handle_last_touch(void)
+static int handle_last_touch(map_tile *tile)
 {
     const touch *last = touch_get_latest();
     if (!last->in_use) {
-        return;
+        return 0;
     }
-    if (touch_was_click(last)) {
-        building_construction_cancel();
-        window_request_refresh();
+    if (touch_was_two_finger_tap()) {
+        touch_consume_current_gesture();
+        scroll_drag_end();
+        data.capture_input = 0;
+        if (building_construction_type() != BUILDING_NONE) {
+            building_construction_cancel();
+            if (building_construction_type() != BUILDING_NONE) {
+                building_construction_cancel();
+            }
+            window_request_refresh();
+        } else if (handle_right_click_allow_building_info(tile)) {
+            window_building_info_show(tile->grid_offset);
+        }
+        return 1;
     } else if (touch_not_click(last)) {
         handle_touch_zoom(touch_get_earliest(), last);
     }
+    return 0;
 }
 
 static int handle_play_pause_button(const touch *t)
@@ -501,6 +513,21 @@ static void handle_first_touch(map_tile *tile)
 {
     const touch *first = touch_get_earliest();
     building_type type = building_construction_type();
+
+    if (touch_poll_long_press()) {
+        scroll_drag_end();
+        data.capture_input = 0;
+        if (type != BUILDING_NONE) {
+            building_construction_cancel();
+            if (building_construction_type() != BUILDING_NONE) {
+                building_construction_cancel();
+            }
+            window_request_refresh();
+        } else if (handle_right_click_allow_building_info(tile)) {
+            window_building_info_show(tile->grid_offset);
+        }
+        return;
+    }
 
     if (touch_was_click(first)) {
         if (handle_play_pause_button(first) ||
@@ -595,8 +622,9 @@ static void handle_touch(void)
         scroll_restore_margins();
     }
 
-    handle_last_touch();
-    handle_first_touch(tile);
+    if (!handle_last_touch(tile)) {
+        handle_first_touch(tile);
+    }
 
     if (first->has_ended) {
         data.capture_input = 0;

@@ -6,6 +6,7 @@
 #include <stdlib.h>
 
 #define CLICK_TIME 300
+#define LONG_PRESS_TIME 350
 #define NOT_MOVING_RANGE 5
 #define SCROLL_FINGER_RADIUS 25
 #define MILLIS_TOLERANCE_BETWEEN_LAST_MOVE_AND_TOUCH_END 60
@@ -79,7 +80,8 @@ int touch_not_click(const touch *t)
 
 int touch_was_click(const touch *t)
 {
-    return (t->has_ended && !t->has_moved && (t->last_change_time - t->start_time) < CLICK_TIME);
+    return (t->has_ended && !t->has_moved && !t->long_press_handled &&
+        (t->last_change_time - t->start_time) < CLICK_TIME);
 }
 
 int touch_was_double_click(const touch *t)
@@ -87,6 +89,45 @@ int touch_was_double_click(const touch *t)
     return (touch_was_click(t) && touch_was_click(&data.old_touch) &&
         (t->start_time > data.old_touch.last_change_time) &&
         (t->start_time - data.old_touch.last_change_time) < CLICK_TIME);
+}
+
+int touch_was_two_finger_tap(void)
+{
+    const touch *first = touch_get_earliest();
+    const touch *last = touch_get_latest();
+    if (!last->in_use || last->start_time - first->start_time >= CLICK_TIME ||
+        first->has_moved || last->has_moved ||
+        first->long_press_handled || last->long_press_handled) {
+        return 0;
+    }
+    time_millis first_end = first->has_ended ? first->last_change_time : time_get_millis();
+    time_millis last_end = last->has_ended ? last->last_change_time : time_get_millis();
+    return (first->has_ended || last->has_ended) &&
+        first_end - first->start_time < CLICK_TIME &&
+        last_end - last->start_time < CLICK_TIME;
+}
+
+int touch_poll_long_press(void)
+{
+    touch *t = (touch *) touch_get_earliest();
+    time_millis end_time = t->has_ended ? t->last_change_time : time_get_millis();
+    if (!t->in_use || t->long_press_handled ||
+        abs(t->current_point.x - t->start_point.x) > 24 ||
+        abs(t->current_point.y - t->start_point.y) > 24 ||
+        end_time - t->start_time < LONG_PRESS_TIME) {
+        return 0;
+    }
+    t->long_press_handled = 1;
+    return 1;
+}
+
+void touch_consume_current_gesture(void)
+{
+    for (int i = 0; i < MAX_ACTIVE_TOUCHES; ++i) {
+        if (data.finger[i].in_use) {
+            data.finger[i].long_press_handled = 1;
+        }
+    }
 }
 
 int touch_is_scroll(void)
@@ -146,6 +187,7 @@ int touch_create(touch_coords start_coords, time_millis start_time)
         t->in_use = 1;
         t->has_started = 1;
         t->has_ended = 0;
+        t->long_press_handled = 0;
         t->start_point = start_coords;
         t->current_point = start_coords;
         t->previous_frame_point = start_coords;
@@ -188,6 +230,7 @@ void touch_end(int index, time_millis current_time)
     if (current_time - t->last_change_time < MILLIS_TOLERANCE_BETWEEN_LAST_MOVE_AND_TOUCH_END) {
         t->frame_movement = t->last_movement;
     }
+    t->last_change_time = current_time;
 }
 
 void reset_touches(int reset_old_touch)

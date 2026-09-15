@@ -22,6 +22,7 @@ typedef struct {
     int has_started;
     int has_moved;
     int has_ended;
+    int long_press_handled;
     touch_coords start_point;
     touch_coords current_point;
     touch_coords previous_frame_point;
@@ -37,6 +38,9 @@ const touch *touch_get_latest(void);
 int touch_not_click(const touch *t);
 int touch_was_click(const touch *t);
 int touch_was_double_click(const touch *t);
+int touch_was_two_finger_tap(void);
+int touch_poll_long_press(void);
+void touch_consume_current_gesture(void);
 
 int touch_is_scroll(void);
 int touch_get_scroll(void);
