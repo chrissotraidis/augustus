@@ -125,7 +125,11 @@ set(PROJECT_VERSION_MINOR 0)
 set(PROJECT_VERSION_PATCH 0)
 set(IS_RELEASE_VERSION FALSE)
 
-if(IS_RELEASE_VERSION)
+if(TARGET_PLATFORM STREQUAL "ios")
+    # Stable in a source archive as well as a full Git checkout.
+    set(PROJECT_VERSION_TWEAK 1433)
+    set(VERSION_REVISION ".1433-caesarpad")
+elseif(IS_RELEASE_VERSION)
     set(PROJECT_VERSION_TWEAK 0)
     set(VERSION_REVISION "")
 elseif (EXISTS "${CMAKE_SOURCE_DIR}/.git")
@@ -197,9 +201,10 @@ if (NINTENDO_SWITCH)
     string(SUBSTRING "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}${VERSION_REVISION}" 0 15 SWITCH_VERSION)
 endif()
 
-configure_file(${PROJECT_SOURCE_DIR}/gen/version.c.in ${PROJECT_SOURCE_DIR}/src/platform/version.c)
-configure_file(${PROJECT_SOURCE_DIR}/gen/version.rc.in ${PROJECT_SOURCE_DIR}/res/version.rc)
-configure_file(${PROJECT_SOURCE_DIR}/gen/version.txt.in ${PROJECT_SOURCE_DIR}/res/version.txt)
+file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/src/platform" "${PROJECT_BINARY_DIR}/res")
+configure_file(${PROJECT_SOURCE_DIR}/gen/version.c.in ${PROJECT_BINARY_DIR}/src/platform/version.c)
+configure_file(${PROJECT_SOURCE_DIR}/gen/version.rc.in ${PROJECT_BINARY_DIR}/res/version.rc)
+configure_file(${PROJECT_SOURCE_DIR}/gen/version.txt.in ${PROJECT_BINARY_DIR}/res/version.txt)
 
 if(${TARGET_PLATFORM} STREQUAL "emscripten")
     configure_file(${PROJECT_SOURCE_DIR}/gen/shell.html.in ${PROJECT_SOURCE_DIR}/res/shell.html)
@@ -264,7 +269,7 @@ set(PLATFORM_FILES
     ${PROJECT_SOURCE_DIR}/src/platform/SDL${SDL_VERSION}/touch.c
     ${PROJECT_SOURCE_DIR}/src/platform/SDL${SDL_VERSION}/virtual_keyboard.c
     ${PROJECT_SOURCE_DIR}/src/platform/user_path.c
-    ${PROJECT_SOURCE_DIR}/src/platform/version.c
+    ${PROJECT_BINARY_DIR}/src/platform/version.c
 )
 
 if (${TARGET_PLATFORM} STREQUAL "vita")

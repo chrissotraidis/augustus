@@ -1,3 +1,6 @@
 [submodule "ext/easyav1"]
 	path = ext/easyav1
 	url = https://github.com/crudelios/easyav1
+[submodule "ext/SDL2/SDL2"]
+	path = ext/SDL2/SDL2
+	url = https://github.com/chrissotraidis/SDL.git
