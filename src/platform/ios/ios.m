@@ -14,9 +14,11 @@ static UIWindow *alertwindow = nil;
 
 @interface CaesarPadPauseTarget : NSObject
 - (void)togglePause;
+- (void)showControls;
 @end
 
 static UIButton *pauseButton = nil;
+static UIButton *helpButton = nil;
 
 @implementation CaesarPadPauseTarget
 
@@ -26,6 +28,29 @@ static UIButton *pauseButton = nil;
     pauseButton.accessibilityValue = paused ? @"Paused" : @"Running";
     [pauseButton setImage:[UIImage systemImageNamed:paused ? @"play.fill" : @"pause.fill"]
                  forState:UIControlStateNormal];
+}
+
+- (void)showControls {
+    if (alertwindow) {
+        return;
+    }
+
+    UIAlertController *alert = [UIAlertController
+        alertControllerWithTitle:@"CaesarPad Controls"
+        message:@"Tap: select buildings and controls\nDrag one finger: pan the map\nDrag two fingers together: pan the map\nPinch: zoom\nLong press or two-finger tap: inspect or cancel\n\nCaesar III is a city builder, not an RTS. Walkers move automatically and cannot be group-selected; military legions are ordered individually."
+        preferredStyle:UIAlertControllerStyleAlert];
+    UIWindow *gameWindow = helpButton.window;
+    [alert addAction:[UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        alertwindow.hidden = YES;
+        alertwindow = nil;
+        [gameWindow makeKeyWindow];
+    }]];
+
+    alertwindow = [[UIWindow alloc] initWithWindowScene:gameWindow.windowScene];
+    alertwindow.rootViewController = [UIViewController new];
+    alertwindow.windowLevel = UIWindowLevelAlert;
+    [alertwindow makeKeyAndVisible];
+    [alertwindow.rootViewController presentViewController:alert animated:YES completion:nil];
 }
 
 @end
@@ -82,17 +107,32 @@ void ios_install_pause_button(void) {
         [pauseButton setImage:[UIImage systemImageNamed:@"pause.fill"] forState:UIControlStateNormal];
         [pauseButton addTarget:pauseTarget action:@selector(togglePause) forControlEvents:UIControlEventTouchUpInside];
 
+        helpButton = [UIButton buttonWithType:UIButtonTypeSystem];
+        helpButton.translatesAutoresizingMaskIntoConstraints = NO;
+        helpButton.accessibilityIdentifier = @"caesarpad.help";
+        helpButton.accessibilityLabel = @"Show CaesarPad controls";
+        helpButton.tintColor = UIColor.whiteColor;
+        helpButton.backgroundColor = [UIColor.blackColor colorWithAlphaComponent:0.65];
+        helpButton.layer.cornerRadius = 10;
+        [helpButton setImage:[UIImage systemImageNamed:@"questionmark"] forState:UIControlStateNormal];
+        [helpButton addTarget:pauseTarget action:@selector(showControls) forControlEvents:UIControlEventTouchUpInside];
+
         [gameWindow addSubview:pauseButton];
+        [gameWindow addSubview:helpButton];
         canvasAccessibility = [[CaesarPadCanvasAccessibilityElement alloc] initWithAccessibilityContainer:gameWindow];
         canvasAccessibility.accessibilityIdentifier = @"caesarpad.canvas";
         canvasAccessibility.accessibilityLabel = @"Caesar III game canvas";
         canvasAccessibility.accessibilityTraits = UIAccessibilityTraitAllowsDirectInteraction;
-        gameWindow.accessibilityElements = @[pauseButton, canvasAccessibility];
+        gameWindow.accessibilityElements = @[pauseButton, helpButton, canvasAccessibility];
         [NSLayoutConstraint activateConstraints:@[
             [pauseButton.leadingAnchor constraintEqualToAnchor:gameWindow.safeAreaLayoutGuide.leadingAnchor constant:12],
             [pauseButton.bottomAnchor constraintEqualToAnchor:gameWindow.safeAreaLayoutGuide.bottomAnchor constant:-12],
             [pauseButton.widthAnchor constraintEqualToConstant:48],
             [pauseButton.heightAnchor constraintEqualToConstant:48],
+            [helpButton.leadingAnchor constraintEqualToAnchor:pauseButton.trailingAnchor constant:8],
+            [helpButton.bottomAnchor constraintEqualToAnchor:pauseButton.bottomAnchor],
+            [helpButton.widthAnchor constraintEqualToConstant:48],
+            [helpButton.heightAnchor constraintEqualToConstant:48],
         ]];
     });
 }
