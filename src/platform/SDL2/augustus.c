@@ -11,6 +11,7 @@
 #include "game/settings.h"
 #include "game/system.h"
 #include "graphics/screen.h"
+#include "graphics/video.h"
 #include "graphics/window.h"
 #include "input/mouse.h"
 #include "input/touch.h"
@@ -255,6 +256,7 @@ static int handle_event_immediate(void *param1, SDL_Event *event)
     switch (event->type) {
         case SDL_APP_WILLENTERBACKGROUND:
 #ifdef __IOS__
+            video_stop_for_lifecycle();
             if (window_get_id() >= WINDOW_CITY && window_get_id() <= WINDOW_SPEED_OPTIONS) {
                 const char *autosave = ios_get_lifecycle_autosave_path();
                 int saved = game_file_write_saved_game(autosave);

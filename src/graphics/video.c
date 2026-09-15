@@ -360,6 +360,17 @@ void video_stop(void)
     }
 }
 
+void video_stop_for_lifecycle(void)
+{
+    if (!data.is_playing) {
+        return;
+    }
+    video_stop();
+    data.is_ended = 1;
+    data.video.draw_frame = 0;
+    data.video.current_frame = 0;
+}
+
 void video_shutdown(void)
 {
     if (data.is_playing) {

@@ -23,7 +23,7 @@ static BOOL pencilMode = NO;
 
 static void updatePencilButton(void) {
     pencilButton.accessibilityValue = pencilMode ? @"On" : @"Off, traditional touch controls";
-    [pencilButton setTitle:pencilMode ? @"Pencil On" : @"Pencil Off" forState:UIControlStateNormal];
+    [pencilButton setTitle:pencilMode ? @"On" : @"Off" forState:UIControlStateNormal];
     pencilButton.backgroundColor = pencilMode ?
         [UIColor.systemBlueColor colorWithAlphaComponent:0.85] :
         [UIColor.blackColor colorWithAlphaComponent:0.65];
@@ -37,8 +37,8 @@ static void updatePencilButton(void) {
     }
 
     NSString *message = pencilMode ?
-        @"PENCIL MODE\nPencil: select, inspect, and place\nDrag one finger: pan only\nPinch: zoom\n\nFinger taps cannot change the city while Pencil mode is on. Tap Pencil On to return to traditional touch controls.\n\nUse the Game speed panel at bottom-right to pause or resume. Caesar III is a city builder, not an RTS: walkers move automatically and cannot be group-selected; military legions are ordered individually." :
-        @"TRADITIONAL TOUCH\nTap: select buildings and controls\nDrag one finger: pan the map\nDrag two fingers together: pan the map\nPinch: zoom\nLong press or two-finger tap: inspect or cancel\n\nTap Pencil Off for precise Pencil interaction with finger-only navigation.\n\nUse the Game speed panel at bottom-right to pause or resume. Caesar III is a city builder, not an RTS: walkers move automatically and cannot be group-selected; military legions are ordered individually.";
+        @"PENCIL MODE\nPencil: select, inspect, and place\nDrag one finger: pan only\nPinch: zoom\n\nFinger taps cannot change the city while Pencil mode is on. Tap the blue Pencil control to return to traditional touch controls.\n\nUse the Game speed panel at bottom-right to pause or resume. Caesar III is a city builder, not an RTS: walkers move automatically and cannot be group-selected; military legions are ordered individually." :
+        @"TRADITIONAL TOUCH\nTap: select buildings and controls\nDrag one finger: pan the map\nDrag two fingers together: pan the map\nPinch: zoom\nLong press or two-finger tap: inspect or cancel\n\nTap the Pencil control for precise Pencil interaction with finger-only navigation.\n\nUse the Game speed panel at bottom-right to pause or resume. Caesar III is a city builder, not an RTS: walkers move automatically and cannot be group-selected; military legions are ordered individually.";
     UIAlertController *alert = [UIAlertController
         alertControllerWithTitle:@"CaesarPad Controls"
         message:message
@@ -115,7 +115,7 @@ void ios_install_pause_button(void) {
         helpButton.accessibilityLabel = @"Show CaesarPad controls";
         helpButton.tintColor = UIColor.whiteColor;
         helpButton.backgroundColor = [UIColor.blackColor colorWithAlphaComponent:0.65];
-        helpButton.layer.cornerRadius = 10;
+        helpButton.layer.cornerRadius = 6;
         [helpButton setImage:[UIImage systemImageNamed:@"questionmark"] forState:UIControlStateNormal];
         [helpButton addTarget:controlsTarget action:@selector(showControls) forControlEvents:UIControlEventTouchUpInside];
 
@@ -125,8 +125,8 @@ void ios_install_pause_button(void) {
         pencilButton.accessibilityLabel = @"Apple Pencil controls";
         pencilButton.tintColor = UIColor.whiteColor;
         [pencilButton setTitleColor:UIColor.whiteColor forState:UIControlStateNormal];
-        pencilButton.titleLabel.font = [UIFont systemFontOfSize:14 weight:UIFontWeightSemibold];
-        pencilButton.layer.cornerRadius = 10;
+        pencilButton.titleLabel.font = [UIFont systemFontOfSize:11 weight:UIFontWeightSemibold];
+        pencilButton.layer.cornerRadius = 6;
         [pencilButton setImage:[UIImage systemImageNamed:@"pencil"] forState:UIControlStateNormal];
         [pencilButton addTarget:controlsTarget action:@selector(togglePencilMode) forControlEvents:UIControlEventTouchUpInside];
         updatePencilButton();
@@ -139,14 +139,14 @@ void ios_install_pause_button(void) {
         canvasAccessibility.accessibilityTraits = UIAccessibilityTraitAllowsDirectInteraction;
         gameWindow.accessibilityElements = @[pencilButton, helpButton, canvasAccessibility];
         [NSLayoutConstraint activateConstraints:@[
-            [pencilButton.leadingAnchor constraintEqualToAnchor:gameWindow.safeAreaLayoutGuide.leadingAnchor constant:12],
-            [pencilButton.bottomAnchor constraintEqualToAnchor:gameWindow.safeAreaLayoutGuide.bottomAnchor constant:-12],
-            [pencilButton.widthAnchor constraintEqualToConstant:112],
-            [pencilButton.heightAnchor constraintEqualToConstant:48],
-            [helpButton.leadingAnchor constraintEqualToAnchor:pencilButton.trailingAnchor constant:8],
-            [helpButton.bottomAnchor constraintEqualToAnchor:pencilButton.bottomAnchor],
-            [helpButton.widthAnchor constraintEqualToConstant:48],
-            [helpButton.heightAnchor constraintEqualToConstant:48],
+            [pencilButton.topAnchor constraintEqualToAnchor:gameWindow.safeAreaLayoutGuide.topAnchor constant:2],
+            [pencilButton.widthAnchor constraintEqualToConstant:52],
+            [pencilButton.heightAnchor constraintEqualToConstant:28],
+            [helpButton.leadingAnchor constraintEqualToAnchor:pencilButton.trailingAnchor constant:3],
+            [helpButton.topAnchor constraintEqualToAnchor:pencilButton.topAnchor],
+            [helpButton.trailingAnchor constraintEqualToAnchor:gameWindow.safeAreaLayoutGuide.trailingAnchor constant:-8],
+            [helpButton.widthAnchor constraintEqualToConstant:28],
+            [helpButton.heightAnchor constraintEqualToConstant:28],
         ]];
     });
 }

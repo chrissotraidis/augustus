@@ -33,6 +33,11 @@ int video_is_finished(void);
 void video_stop(void);
 
 /**
+ * Finish an active video before the app renderer is suspended
+ */
+void video_stop_for_lifecycle(void);
+
+/**
  * Shut down the video subsystem
  */
 void video_shutdown(void);
