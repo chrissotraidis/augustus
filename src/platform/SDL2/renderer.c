@@ -1372,9 +1372,11 @@ static void draw_tooltip(void)
 static void draw_software_mouse_cursor(void)
 {
     const mouse *m = mouse_get();
+#ifndef __IOS__
     if (m->is_touch) {
         return;
     }
+#endif
     cursor_shape current = platform_cursor_get_current_shape();
     if (current == CURSOR_DISABLED) {
         return;

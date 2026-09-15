@@ -658,6 +658,17 @@ static void setup(const augustus_args *args)
     if (args->cursor_scale_percentage) {
         config_set(CONFIG_SCREEN_CURSOR_SCALE, args->cursor_scale_percentage);
     }
+#ifdef __IOS__
+    // Fixed-size desktop UI and cursors are too small on a high-density iPad canvas.
+    // Migrate the upstream and previous CaesarPad cursor defaults, but keep explicit choices.
+    if (config_get(CONFIG_SCREEN_DISPLAY_SCALE) < 150) {
+        config_set(CONFIG_SCREEN_DISPLAY_SCALE, 150);
+    }
+    int cursor_scale = config_get(CONFIG_SCREEN_CURSOR_SCALE);
+    if (cursor_scale == 100 || cursor_scale == 200) {
+        config_set(CONFIG_SCREEN_CURSOR_SCALE, 140);
+    }
+#endif
 
     char title[100];
     encoding_to_utf8(lang_get_string(9, 0), title, 100, 0);
@@ -683,15 +694,22 @@ static void setup(const augustus_args *args)
 #endif
         platform_cursor_force_software_mode();
     }
+#ifdef __IOS__
+    // UIKit does not provide a pointer for direct finger input. Render Augustus's
+    // cursor instead so the last touched position and active tool remain visible.
+    platform_cursor_force_software_mode();
+#endif
 
     // This has to come after platform_screen_create, otherwise it fails on Nintendo Switch
     system_init_cursors(config_get(CONFIG_SCREEN_CURSOR_SCALE));
 
     // If there's no hardware cursor support and no joysticks, let's assume there are touch controls and hide the cursor,
     // otherwise it would be annoying to have a cursor permanently on screen with no way to move it
+#ifndef __IOS__
     if (!platform_cursor_has_hardware_cursor() && !joysticks_are_connected()) {
         system_hide_cursor();
     }
+#endif
 
     time_set_millis(system_get_ticks());
 
