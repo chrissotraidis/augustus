@@ -179,7 +179,17 @@ const char *ios_get_lifecycle_autosave_path(void) {
 const char *ios_show_c3_path_dialog(int again)
 {
     if (window == nil) {
-        window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+        // With UIKit scenes (required for the iOS 27 SDK) a window shows only when
+        // it is attached to the application scene.
+        UIWindowScene *scene = nil;
+        for (UIScene *candidate in UIApplication.sharedApplication.connectedScenes) {
+            if ([candidate isKindOfClass:UIWindowScene.class]) {
+                scene = (UIWindowScene *)candidate;
+                break;
+            }
+        }
+        window = scene ? [[UIWindow alloc] initWithWindowScene:scene]
+                       : [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
         window.rootViewController = [UIViewController new];
         window.windowLevel = UIWindowLevelAlert;
 
