@@ -2,6 +2,7 @@
 
 #import "GameDataPickerController.h"
 
+#import <GameController/GameController.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 #include "input/touch.h"
@@ -15,6 +16,7 @@ static UIWindow *alertwindow = nil;
 @interface CaesarPadControlsTarget : NSObject
 - (void)showControls;
 - (void)togglePencilMode;
+- (void)controllerConnectionChanged:(NSNotification *)notification;
 @end
 
 static UIButton *helpButton = nil;
@@ -30,6 +32,13 @@ static void updatePencilButton(void) {
 }
 
 @implementation CaesarPadControlsTarget
+
+- (void)controllerConnectionChanged:(NSNotification *)notification {
+    (void)notification;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        pencilButton.hidden = GCController.controllers.count != 0;
+    });
+}
 
 - (void)showControls {
     if (alertwindow) {
@@ -130,6 +139,13 @@ void ios_install_pause_button(void) {
         [pencilButton setImage:[UIImage systemImageNamed:@"pencil"] forState:UIControlStateNormal];
         [pencilButton addTarget:controlsTarget action:@selector(togglePencilMode) forControlEvents:UIControlEventTouchUpInside];
         updatePencilButton();
+
+        NSNotificationCenter *center = NSNotificationCenter.defaultCenter;
+        [center addObserver:controlsTarget selector:@selector(controllerConnectionChanged:)
+            name:GCControllerDidConnectNotification object:nil];
+        [center addObserver:controlsTarget selector:@selector(controllerConnectionChanged:)
+            name:GCControllerDidDisconnectNotification object:nil];
+        [controlsTarget controllerConnectionChanged:nil];
 
         [gameWindow addSubview:pencilButton];
         [gameWindow addSubview:helpButton];

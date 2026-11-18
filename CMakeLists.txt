@@ -1128,8 +1128,8 @@ else()
         target_include_directories(${SHORT_NAME} PRIVATE "${SDL_EXT_DIR}/include")
         target_include_directories(${SHORT_NAME} PRIVATE "${SDL_MIXER_EXT_DIR}/include")
 
-        # Add UniformTypeIdentifiers to the list of linked frameworks
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-framework,UniformTypeIdentifiers")
+        # Link the Apple document and controller APIs used by the iOS shell.
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-framework,UniformTypeIdentifiers -Wl,-framework,GameController")
 
         set_target_properties(${SHORT_NAME}  PROPERTIES
             XCODE_ATTRIBUTE_INSTALL_PATH "$(LOCAL_APPS_DIR)"

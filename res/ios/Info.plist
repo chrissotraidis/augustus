@@ -10,6 +10,15 @@
   <string>${MACOSX_BUNDLE_EXECUTABLE_NAME}</string>
   <key>CFBundleIdentifier</key>
   <string>${MACOSX_BUNDLE_GUI_IDENTIFIER}</string>
+  <key>CFBundleURLTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleURLSchemes</key>
+      <array>
+        <string>padmint-caesarpad</string>
+      </array>
+    </dict>
+  </array>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundleName</key>
@@ -37,6 +46,8 @@
   <true/>
   <key>UIRequiresFullScreen</key>
   <true/>
+  <key>UIRequiresFullScreenIgnoredStartingWithVersion</key>
+  <string>26</string>
   <key>UIRequiredDeviceCapabilities</key>
   <array>
     <string>armv7</string>
@@ -50,6 +61,13 @@
   </dict>
   <key>UISupportedInterfaceOrientations</key>
   <array>
+    <string>UIInterfaceOrientationLandscapeLeft</string>
+    <string>UIInterfaceOrientationLandscapeRight</string>
+  </array>
+  <key>UISupportedInterfaceOrientations~ipad</key>
+  <array>
+    <string>UIInterfaceOrientationPortrait</string>
+    <string>UIInterfaceOrientationPortraitUpsideDown</string>
     <string>UIInterfaceOrientationLandscapeLeft</string>
     <string>UIInterfaceOrientationLandscapeRight</string>
   </array>
